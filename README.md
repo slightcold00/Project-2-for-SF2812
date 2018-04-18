@@ -1,2 +1,4 @@
 # Project-2-for-SF2812
-Control of a mobile robot with discrete time model
+The problem solved in this report is a mixed-integer<br>
+linear program for a mobile robot moving in 2D-space. The aim is to define the control of a robot.Therefore, we are minimizing the total time steps that steer the robot from rest in the origin to the given set in plane. The constraints in the system are the accelerations in the corresponding coordinate directions at the given time step and binary variables checking whether the robot has reached the given set in plane at time step with the given sampling interval. The problem is modelled in the way that optimal control strategy will be able to steer the robot from the rest in the origin to the given set in minimal time by summing binary variables. Formulating and solving<br>
+the problem in GAMS results in a minimum time steps of 4. If we decrease the sampling time $h$ and control signal limit $\alpha$ the solution can be changed depending what we keep constant and variable. And when the movement of robot is further constrained in a defined path , then the optimal time steps to reach the given set in plane from origin is 6. <br>
