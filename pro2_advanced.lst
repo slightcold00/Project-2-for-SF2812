@@ -1,0 +1,1254 @@
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                      02/24/18 18:04:31 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  set k 'number of steps' / 0 * 10 /;
+   2   
+   3  scalar
+   4      h 'time interval' /1/
+   5      alpha 'limit of u' /2/;
+   6   
+   7  variables
+   8      x1(k)      z_1 -coordinate at time kh
+   9      x2(k)      the velocity in the z_1 -direction at time kh
+  10      x3(k)      z_2 -coordinate at time kh
+  11      x4(k)      the velocity in the z_2 -direction at time kh
+  12      u1(k)      control signal in z_1 -direction at time kh
+  13      u2(k)      control signal in z_2 -direction at time kh
+  14      z(k)       whether the robot need one more step to reach the destination
+  15      r1(k)      whether the robot is in the part_1 of the corridor at time kh
+  16      r2(k)      whether the robot is in the part_2 of the corridor at time kh
+  17      T          totalstep;
+  18   
+  19  binary variables z, r1, r2;
+  20   
+  21   
+  22  u1.up(k) = alpha;
+  23  u1.lo(k) = -alpha;
+  24  u2.up(k) = alpha;
+  25  u2.lo(k) = -alpha;
+  26  x1.up(k) = 6.5;
+  27  x3.lo(k) = -0.5;
+  28   
+  29   
+  30  equations
+  31      x1_equ(k)    the updated location in direction z_1
+  32      x2_equ(k)    the updated velocity in direction z_1
+  33      x3_equ(k)    the updated location in direction z_2
+  34      x4_equ(k)    the updated velocity in direction z_2
+  35      x11_loc(k)     whether the robot need one more step to reach the destination according to constraint11 at time kh
+  36      x12_loc(k)     whether the robot need one more step to reach the destination according to constraint12 at time kh
+  37      x21_loc(k)     whether the robot need one more step to reach the destination according to constraint21 at time kh
+  38      x22_loc(k)     whether the robot need one more step to reach the destination according to constraint22 at time kh
+  39      x31_loc(k)     whether the robot need one more step to reach the destination according to constraint31 at time kh
+  40      x32_loc(k)     whether the robot need one more step to reach the destination according to constraint32 at time kh
+  41      x41_loc(k)     whether the robot need one more step to reach the destination according to constraint41 at time kh
+  42      x42_loc(k)     whether the robot need one more step to reach the destination according to constraint42 at time kh
+  43      x110_loc(k)    whether the robot need one more step in the part_1
+  44      x120_loc(k)    whether the robot need one more step in the part_1
+  45      x310_loc(k)    whether the robot need one more step in the part_1
+  46      x320_loc(k)    whether the robot need one more step in the part_1
+  47      r2_equ(k)    whether the robot start to walk in the part_2 of the corridor
+  48      z_equ(k)    the relationship between z and r
+  49      T_equ    totalstep;
+  50   
+  51  x1_equ(k) .. x1(k+1)  =e= x1(k) + x2(k) * h + sqr(h)/2 * u1(k);
+  52  x2_equ(k) .. x2(k+1)  =e= x2(k) + h * u1(k) ;
+  53  x3_equ(k) .. x3(k+1)  =e= x3(k) + x4(k) * h + sqr(h)/2 * u2(k);
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                      02/24/18 18:04:31 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+  54  x4_equ(k) .. x4(k+1)  =e= x4(k) + h * u2(k) ;
+  55  x110_loc(k) .. r1(k) =g= (5.5 - x1(k))/100 + r1(k-1) - 1;
+  56  x120_loc(k) .. r1(k) =g= (x1(k) -6.5)/100 + r1(k-1) - 1;
+  57  x310_loc(k) .. r1(k) =g= (-0.5 - x3(k))/100 + r1(k-1) - 1;
+  58  x320_loc(k) .. r1(k) =g= (x3(k) -0.5)/100 + r1(k-1) - 1;
+  59  r2_equ(k)  .. r2(k) =l= (x1(k)-5.5)/100 +1;
+  60  z_equ(k) ..z(k) =e= r1(k) + r2(k);
+  61  x11_loc(k) .. z(k) =g= (5.9 - x1(k))/100 + z(k-1) - 1 ;
+  62  x12_loc(k) .. z(k) =g= (x1(k) -6.1)/100 + z(k-1) - 1;
+  63  x21_loc(k) .. z(k) =g= (-0.1 -x2(k))/100 + z(k-1) - 1;
+  64  x22_loc(k) .. z(k) =g= (x2(k) -0.1)/100 + z(k-1) - 1;
+  65  x31_loc(k) ..  z(k) =g= (6.9 - x3(k))/100 + z(k-1) - 1;
+  66  x32_loc(k) .. z(k) =g= (x3(k) -7.1)/100 + z(k-1) - 1;
+  67  x41_loc(k) ..z(k) =g= (-0.1 - x4(k))/100 + z(k-1) - 1;
+  68  x42_loc(k) .. z(k) =g= (x4(k) - 0.1)/100 + z(k-1) - 1;
+  69  T_equ  .. T =e= sum(k,z(k));
+  70   
+  71  x1.fx('0') = 0;
+  72  x2.fx('0') = 0;
+  73  x3.fx('0') = 0;
+  74  x4.fx('0') = 0;
+  75  r1.fx('0') = 1;
+  76  r2.fx('0') = 0;
+  77   
+  78   
+  79  Model project2 / all /;
+  80   
+  81  solve project2 miniziming T using mip;
+  82   
+  83  display T.l,u1.l,u2.l,z.l,x1.l,x2.l,x3.l,x4.l,r1.l,r2.l;
+
+
+COMPILATION TIME     =        0.001 SECONDS      3 MB  25.0.1 r65189 LEX-LEG
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                      02/24/18 18:04:31 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE project2 Using MIP From line 81
+
+
+---- x1_equ  =E=  the updated location in direction z_1
+
+x1_equ(0)..  - x1(0) + x1(1) - x2(0) - 0.5*u1(0) =E= 0 ; (LHS = 0)
+     
+x1_equ(1)..  - x1(1) + x1(2) - x2(1) - 0.5*u1(1) =E= 0 ; (LHS = 0)
+     
+x1_equ(2)..  - x1(2) + x1(3) - x2(2) - 0.5*u1(2) =E= 0 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x2_equ  =E=  the updated velocity in direction z_1
+
+x2_equ(0)..  - x2(0) + x2(1) - u1(0) =E= 0 ; (LHS = 0)
+     
+x2_equ(1)..  - x2(1) + x2(2) - u1(1) =E= 0 ; (LHS = 0)
+     
+x2_equ(2)..  - x2(2) + x2(3) - u1(2) =E= 0 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x3_equ  =E=  the updated location in direction z_2
+
+x3_equ(0)..  - x3(0) + x3(1) - x4(0) - 0.5*u2(0) =E= 0 ; (LHS = 0)
+     
+x3_equ(1)..  - x3(1) + x3(2) - x4(1) - 0.5*u2(1) =E= 0 ; (LHS = 0)
+     
+x3_equ(2)..  - x3(2) + x3(3) - x4(2) - 0.5*u2(2) =E= 0 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x4_equ  =E=  the updated velocity in direction z_2
+
+x4_equ(0)..  - x4(0) + x4(1) - u2(0) =E= 0 ; (LHS = 0)
+     
+x4_equ(1)..  - x4(1) + x4(2) - u2(1) =E= 0 ; (LHS = 0)
+     
+x4_equ(2)..  - x4(2) + x4(3) - u2(2) =E= 0 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x11_loc  =G=  whether the robot need one more step to reach the destination according to constraint11 at time kh
+
+x11_loc(0)..  0.01*x1(0) + z(0) =G= -0.941 ; (LHS = 0)
+     
+x11_loc(1)..  0.01*x1(1) - z(0) + z(1) =G= -0.941 ; (LHS = 0)
+     
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                      02/24/18 18:04:31 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE project2 Using MIP From line 81
+
+
+     x11_loc  =G=  whether the robot need one more step to reach the destination according to constraint11 at time kh
+
+x11_loc(2)..  0.01*x1(2) - z(1) + z(2) =G= -0.941 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x12_loc  =G=  whether the robot need one more step to reach the destination according to constraint12 at time kh
+
+x12_loc(0)..  - 0.01*x1(0) + z(0) =G= -1.061 ; (LHS = 0)
+     
+x12_loc(1)..  - 0.01*x1(1) - z(0) + z(1) =G= -1.061 ; (LHS = 0)
+     
+x12_loc(2)..  - 0.01*x1(2) - z(1) + z(2) =G= -1.061 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x21_loc  =G=  whether the robot need one more step to reach the destination according to constraint21 at time kh
+
+x21_loc(0)..  0.01*x2(0) + z(0) =G= -1.001 ; (LHS = 0)
+     
+x21_loc(1)..  0.01*x2(1) - z(0) + z(1) =G= -1.001 ; (LHS = 0)
+     
+x21_loc(2)..  0.01*x2(2) - z(1) + z(2) =G= -1.001 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x22_loc  =G=  whether the robot need one more step to reach the destination according to constraint22 at time kh
+
+x22_loc(0)..  - 0.01*x2(0) + z(0) =G= -1.001 ; (LHS = 0)
+     
+x22_loc(1)..  - 0.01*x2(1) - z(0) + z(1) =G= -1.001 ; (LHS = 0)
+     
+x22_loc(2)..  - 0.01*x2(2) - z(1) + z(2) =G= -1.001 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x31_loc  =G=  whether the robot need one more step to reach the destination according to constraint31 at time kh
+
+x31_loc(0)..  0.01*x3(0) + z(0) =G= -0.931 ; (LHS = 0)
+     
+x31_loc(1)..  0.01*x3(1) - z(0) + z(1) =G= -0.931 ; (LHS = 0)
+     
+x31_loc(2)..  0.01*x3(2) - z(1) + z(2) =G= -0.931 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                      02/24/18 18:04:31 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE project2 Using MIP From line 81
+
+
+---- x32_loc  =G=  whether the robot need one more step to reach the destination according to constraint32 at time kh
+
+x32_loc(0)..  - 0.01*x3(0) + z(0) =G= -1.071 ; (LHS = 0)
+     
+x32_loc(1)..  - 0.01*x3(1) - z(0) + z(1) =G= -1.071 ; (LHS = 0)
+     
+x32_loc(2)..  - 0.01*x3(2) - z(1) + z(2) =G= -1.071 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x41_loc  =G=  whether the robot need one more step to reach the destination according to constraint41 at time kh
+
+x41_loc(0)..  0.01*x4(0) + z(0) =G= -1.001 ; (LHS = 0)
+     
+x41_loc(1)..  0.01*x4(1) - z(0) + z(1) =G= -1.001 ; (LHS = 0)
+     
+x41_loc(2)..  0.01*x4(2) - z(1) + z(2) =G= -1.001 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x42_loc  =G=  whether the robot need one more step to reach the destination according to constraint42 at time kh
+
+x42_loc(0)..  - 0.01*x4(0) + z(0) =G= -1.001 ; (LHS = 0)
+     
+x42_loc(1)..  - 0.01*x4(1) - z(0) + z(1) =G= -1.001 ; (LHS = 0)
+     
+x42_loc(2)..  - 0.01*x4(2) - z(1) + z(2) =G= -1.001 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x110_loc  =G=  whether the robot need one more step in the part_1
+
+x110_loc(0)..  0.01*x1(0) + r1(0) =G= -0.945 ; (LHS = 1)
+     
+x110_loc(1)..  0.01*x1(1) - r1(0) + r1(1) =G= -0.945 ; (LHS = -1, INFES = 0.0549999999999999 ****)
+     
+x110_loc(2)..  0.01*x1(2) - r1(1) + r1(2) =G= -0.945 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x120_loc  =G=  whether the robot need one more step in the part_1
+
+x120_loc(0)..  - 0.01*x1(0) + r1(0) =G= -1.065 ; (LHS = 1)
+     
+x120_loc(1)..  - 0.01*x1(1) - r1(0) + r1(1) =G= -1.065 ; (LHS = -1)
+     
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                      02/24/18 18:04:31 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE project2 Using MIP From line 81
+
+
+     x120_loc  =G=  whether the robot need one more step in the part_1
+
+x120_loc(2)..  - 0.01*x1(2) - r1(1) + r1(2) =G= -1.065 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x310_loc  =G=  whether the robot need one more step in the part_1
+
+x310_loc(0)..  0.01*x3(0) + r1(0) =G= -1.005 ; (LHS = 1)
+     
+x310_loc(1)..  0.01*x3(1) - r1(0) + r1(1) =G= -1.005 ; (LHS = -1)
+     
+x310_loc(2)..  0.01*x3(2) - r1(1) + r1(2) =G= -1.005 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- x320_loc  =G=  whether the robot need one more step in the part_1
+
+x320_loc(0)..  - 0.01*x3(0) + r1(0) =G= -1.005 ; (LHS = 1)
+     
+x320_loc(1)..  - 0.01*x3(1) - r1(0) + r1(1) =G= -1.005 ; (LHS = -1)
+     
+x320_loc(2)..  - 0.01*x3(2) - r1(1) + r1(2) =G= -1.005 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- r2_equ  =L=  whether the robot start to walk in the part_2 of the corridor
+
+r2_equ(0)..  - 0.01*x1(0) + r2(0) =L= 0.945 ; (LHS = 0)
+     
+r2_equ(1)..  - 0.01*x1(1) + r2(1) =L= 0.945 ; (LHS = 0)
+     
+r2_equ(2)..  - 0.01*x1(2) + r2(2) =L= 0.945 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+
+---- z_equ  =E=  the relationship between z and r
+
+z_equ(0)..  z(0) - r1(0) - r2(0) =E= 0 ; (LHS = -1, INFES = 1 ****)
+     
+z_equ(1)..  z(1) - r1(1) - r2(1) =E= 0 ; (LHS = 0)
+     
+z_equ(2)..  z(2) - r1(2) - r2(2) =E= 0 ; (LHS = 0)
+     
+REMAINING 8 ENTRIES SKIPPED
+
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                      02/24/18 18:04:31 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE project2 Using MIP From line 81
+
+
+---- T_equ  =E=  totalstep
+
+T_equ..  - z(0) - z(1) - z(2) - z(3) - z(4) - z(5) - z(6) - z(7) - z(8) - z(9) - z(10) + T =E= 0 ; (LHS = 0)
+     
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                      02/24/18 18:04:31 Page 8
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE project2 Using MIP From line 81
+
+
+---- x1  z_1 -coordinate at time kh
+
+x1(0)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+       -1       x1_equ(0)
+        0.01    x11_loc(0)
+       -0.01    x12_loc(0)
+        0.01    x110_loc(0)
+       -0.01    x120_loc(0)
+       -0.01    r2_equ(0)
+
+x1(1)
+                (.LO, .L, .UP, .M = -INF, 0, 6.5, 0)
+        1       x1_equ(0)
+       -1       x1_equ(1)
+        0.01    x11_loc(1)
+       -0.01    x12_loc(1)
+        0.01    x110_loc(1)
+       -0.01    x120_loc(1)
+       -0.01    r2_equ(1)
+
+x1(2)
+                (.LO, .L, .UP, .M = -INF, 0, 6.5, 0)
+        1       x1_equ(1)
+       -1       x1_equ(2)
+        0.01    x11_loc(2)
+       -0.01    x12_loc(2)
+        0.01    x110_loc(2)
+       -0.01    x120_loc(2)
+       -0.01    r2_equ(2)
+
+REMAINING 8 ENTRIES SKIPPED
+
+---- x2  the velocity in the z_1 -direction at time kh
+
+x2(0)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+       -1       x1_equ(0)
+       -1       x2_equ(0)
+        0.01    x21_loc(0)
+       -0.01    x22_loc(0)
+
+x2(1)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       x1_equ(1)
+        1       x2_equ(0)
+       -1       x2_equ(1)
+        0.01    x21_loc(1)
+       -0.01    x22_loc(1)
+
+x2(2)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       x1_equ(2)
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                      02/24/18 18:04:31 Page 9
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE project2 Using MIP From line 81
+
+
+     x2  the velocity in the z_1 -direction at time kh
+
+        1       x2_equ(1)
+       -1       x2_equ(2)
+        0.01    x21_loc(2)
+       -0.01    x22_loc(2)
+
+REMAINING 8 ENTRIES SKIPPED
+
+---- x3  z_2 -coordinate at time kh
+
+x3(0)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+       -1       x3_equ(0)
+        0.01    x31_loc(0)
+       -0.01    x32_loc(0)
+        0.01    x310_loc(0)
+       -0.01    x320_loc(0)
+
+x3(1)
+                (.LO, .L, .UP, .M = -0.5, 0, +INF, 0)
+        1       x3_equ(0)
+       -1       x3_equ(1)
+        0.01    x31_loc(1)
+       -0.01    x32_loc(1)
+        0.01    x310_loc(1)
+       -0.01    x320_loc(1)
+
+x3(2)
+                (.LO, .L, .UP, .M = -0.5, 0, +INF, 0)
+        1       x3_equ(1)
+       -1       x3_equ(2)
+        0.01    x31_loc(2)
+       -0.01    x32_loc(2)
+        0.01    x310_loc(2)
+       -0.01    x320_loc(2)
+
+REMAINING 8 ENTRIES SKIPPED
+
+---- x4  the velocity in the z_2 -direction at time kh
+
+x4(0)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+       -1       x3_equ(0)
+       -1       x4_equ(0)
+        0.01    x41_loc(0)
+       -0.01    x42_loc(0)
+
+x4(1)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       x3_equ(1)
+        1       x4_equ(0)
+       -1       x4_equ(1)
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 10
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE project2 Using MIP From line 81
+
+
+     x4  the velocity in the z_2 -direction at time kh
+
+        0.01    x41_loc(1)
+       -0.01    x42_loc(1)
+
+x4(2)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       x3_equ(2)
+        1       x4_equ(1)
+       -1       x4_equ(2)
+        0.01    x41_loc(2)
+       -0.01    x42_loc(2)
+
+REMAINING 8 ENTRIES SKIPPED
+
+---- u1  control signal in z_1 -direction at time kh
+
+u1(0)
+                (.LO, .L, .UP, .M = -2, 0, 2, 0)
+       -0.5     x1_equ(0)
+       -1       x2_equ(0)
+
+u1(1)
+                (.LO, .L, .UP, .M = -2, 0, 2, 0)
+       -0.5     x1_equ(1)
+       -1       x2_equ(1)
+
+u1(2)
+                (.LO, .L, .UP, .M = -2, 0, 2, 0)
+       -0.5     x1_equ(2)
+       -1       x2_equ(2)
+
+REMAINING 8 ENTRIES SKIPPED
+
+---- u2  control signal in z_2 -direction at time kh
+
+u2(0)
+                (.LO, .L, .UP, .M = -2, 0, 2, 0)
+       -0.5     x3_equ(0)
+       -1       x4_equ(0)
+
+u2(1)
+                (.LO, .L, .UP, .M = -2, 0, 2, 0)
+       -0.5     x3_equ(1)
+       -1       x4_equ(1)
+
+u2(2)
+                (.LO, .L, .UP, .M = -2, 0, 2, 0)
+       -0.5     x3_equ(2)
+       -1       x4_equ(2)
+
+REMAINING 8 ENTRIES SKIPPED
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 11
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE project2 Using MIP From line 81
+
+
+---- z  whether the robot need one more step to reach the destination
+
+z(0)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        1       x11_loc(0)
+       -1       x11_loc(1)
+        1       x12_loc(0)
+       -1       x12_loc(1)
+        1       x21_loc(0)
+       -1       x21_loc(1)
+        1       x22_loc(0)
+       -1       x22_loc(1)
+        1       x31_loc(0)
+       -1       x31_loc(1)
+        1       x32_loc(0)
+       -1       x32_loc(1)
+        1       x41_loc(0)
+       -1       x41_loc(1)
+        1       x42_loc(0)
+       -1       x42_loc(1)
+        1       z_equ(0)
+       -1       T_equ
+
+z(1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        1       x11_loc(1)
+       -1       x11_loc(2)
+        1       x12_loc(1)
+       -1       x12_loc(2)
+        1       x21_loc(1)
+       -1       x21_loc(2)
+        1       x22_loc(1)
+       -1       x22_loc(2)
+        1       x31_loc(1)
+       -1       x31_loc(2)
+        1       x32_loc(1)
+       -1       x32_loc(2)
+        1       x41_loc(1)
+       -1       x41_loc(2)
+        1       x42_loc(1)
+       -1       x42_loc(2)
+        1       z_equ(1)
+       -1       T_equ
+
+z(2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        1       x11_loc(2)
+       -1       x11_loc(3)
+        1       x12_loc(2)
+       -1       x12_loc(3)
+        1       x21_loc(2)
+       -1       x21_loc(3)
+        1       x22_loc(2)
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 12
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE project2 Using MIP From line 81
+
+
+     z  whether the robot need one more step to reach the destination
+
+       -1       x22_loc(3)
+        1       x31_loc(2)
+       -1       x31_loc(3)
+        1       x32_loc(2)
+       -1       x32_loc(3)
+        1       x41_loc(2)
+       -1       x41_loc(3)
+        1       x42_loc(2)
+       -1       x42_loc(3)
+        1       z_equ(2)
+       -1       T_equ
+
+REMAINING 8 ENTRIES SKIPPED
+
+---- r1  whether the robot is in the part_1 of the corridor at time kh
+
+r1(0)
+                (.LO, .L, .UP, .M = 1, 1, 1, 0)
+        1       x110_loc(0)
+       -1       x110_loc(1)
+        1       x120_loc(0)
+       -1       x120_loc(1)
+        1       x310_loc(0)
+       -1       x310_loc(1)
+        1       x320_loc(0)
+       -1       x320_loc(1)
+       -1       z_equ(0)
+
+r1(1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        1       x110_loc(1)
+       -1       x110_loc(2)
+        1       x120_loc(1)
+       -1       x120_loc(2)
+        1       x310_loc(1)
+       -1       x310_loc(2)
+        1       x320_loc(1)
+       -1       x320_loc(2)
+       -1       z_equ(1)
+
+r1(2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        1       x110_loc(2)
+       -1       x110_loc(3)
+        1       x120_loc(2)
+       -1       x120_loc(3)
+        1       x310_loc(2)
+       -1       x310_loc(3)
+        1       x320_loc(2)
+       -1       x320_loc(3)
+       -1       z_equ(2)
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 13
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE project2 Using MIP From line 81
+
+
+     r1  whether the robot is in the part_1 of the corridor at time kh
+
+
+REMAINING 8 ENTRIES SKIPPED
+
+---- r2  whether the robot is in the part_2 of the corridor at time kh
+
+r2(0)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+        1       r2_equ(0)
+       -1       z_equ(0)
+
+r2(1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        1       r2_equ(1)
+       -1       z_equ(1)
+
+r2(2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        1       r2_equ(2)
+       -1       z_equ(2)
+
+REMAINING 8 ENTRIES SKIPPED
+
+---- T  totalstep
+
+T
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       T_equ
+
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 14
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE project2 Using MIP From line 81
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS          19     SINGLE EQUATIONS          199
+BLOCKS OF VARIABLES          10     SINGLE VARIABLES          100
+NON ZERO ELEMENTS           601     DISCRETE VARIABLES         31
+
+
+GENERATION TIME      =        0.007 SECONDS      4 MB  25.0.1 r65189 LEX-LEG
+
+
+EXECUTION TIME       =        0.007 SECONDS      4 MB  25.0.1 r65189 LEX-LEG
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 15
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   project2            OBJECTIVE  T
+     TYPE    MIP                 DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  81
+
+**** SOLVER STATUS     1 Normal Completion         
+**** MODEL STATUS      1 Optimal                   
+**** OBJECTIVE VALUE                6.0000
+
+ RESOURCE USAGE, LIMIT          0.032      1000.000
+ ITERATION COUNT, LIMIT       104    2000000000
+
+IBM ILOG CPLEX   25.0.1 r65189 Released Jan 17, 2018 LEG x86 64bit/Linux      
+Cplex 12.8.0.0
+
+Space for names approximately 0.00 Mb
+Use option 'names no' to turn use of names off
+MIP status(101): integer optimal solution
+Cplex Time: 0.03sec (det. 4.81 ticks)
+Fixing integer variables, and solving final LP...
+Fixed MIP status(1): optimal
+Cplex Time: 0.00sec (det. 0.21 ticks)
+Proven optimal solution.
+
+MIP Solution:            6.000000    (88 iterations, 5 nodes)
+Final Solve:             6.000000    (16 iterations)
+
+Best possible:           6.000000
+Absolute gap:            0.000000
+Relative gap:            0.000000
+
+
+---- EQU x1_equ  the updated location in direction z_1
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .             EPS         
+1           .              .              .             EPS         
+2           .              .              .             EPS         
+3           .              .              .             EPS         
+4           .              .              .             EPS         
+5           .              .              .             EPS         
+6           .              .              .             EPS         
+7           .              .              .             EPS         
+8           .              .              .             EPS         
+9           .              .              .             EPS         
+10          .              .              .             EPS         
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 16
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+---- EQU x2_equ  the updated velocity in direction z_1
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .             EPS         
+1           .              .              .             EPS         
+2           .              .              .             EPS         
+3           .              .              .             EPS         
+4           .              .              .             EPS         
+5           .              .              .             EPS         
+6           .              .              .             EPS         
+7           .              .              .             EPS         
+8           .              .              .             EPS         
+9           .              .              .             EPS         
+10          .              .              .             EPS         
+
+---- EQU x3_equ  the updated location in direction z_2
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .             EPS         
+1           .              .              .             EPS         
+2           .              .              .             EPS         
+3           .              .              .             EPS         
+4           .              .              .             EPS         
+5           .              .              .             EPS         
+6           .              .              .             EPS         
+7           .              .              .             EPS         
+8           .              .              .             EPS         
+9           .              .              .             EPS         
+10          .              .              .             EPS         
+
+---- EQU x4_equ  the updated velocity in direction z_2
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .             EPS         
+1           .              .              .             EPS         
+2           .              .              .             EPS         
+3           .              .              .             EPS         
+4           .              .              .             EPS         
+5           .              .              .             EPS         
+6           .              .              .             EPS         
+7           .              .              .             EPS         
+8           .              .              .             EPS         
+9           .              .              .             EPS         
+10          .              .              .             EPS         
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 17
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+---- EQU x11_loc  whether the robot need one more step to reach the destination according to constraint11 at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -0.9410         1.0000        +INF             .          
+1         -0.9410         0.0070        +INF             .          
+2         -0.9410         0.0310        +INF             .          
+3         -0.9410         0.0550        +INF             .          
+4         -0.9410         0.0650        +INF             .          
+5         -0.9410         0.0637        +INF             .          
+6         -0.9410        -0.9410        +INF            EPS         
+7         -0.9410         0.0612        +INF             .          
+8         -0.9410         0.0566        +INF             .          
+9         -0.9410         0.0319        +INF             .          
+10        -0.9410         0.0073        +INF             .          
+
+---- EQU x12_loc  whether the robot need one more step to reach the destination according to constraint12 at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -1.0610         1.0000        +INF             .          
+1         -1.0610        -0.0070        +INF             .          
+2         -1.0610        -0.0310        +INF             .          
+3         -1.0610        -0.0550        +INF             .          
+4         -1.0610        -0.0650        +INF             .          
+5         -1.0610        -0.0637        +INF             .          
+6         -1.0610        -1.0590        +INF             .          
+7         -1.0610        -0.0612        +INF             .          
+8         -1.0610        -0.0566        +INF             .          
+9         -1.0610        -0.0319        +INF             .          
+10        -1.0610        -0.0073        +INF             .          
+
+---- EQU x21_loc  whether the robot need one more step to reach the destination according to constraint21 at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -1.0010         1.0000        +INF             .          
+1         -1.0010         0.0140        +INF             .          
+2         -1.0010         0.0340        +INF             .          
+3         -1.0010         0.0140        +INF             .          
+4         -1.0010         0.0060        +INF             .          
+5         -1.0010        -0.0085        +INF             .          
+6         -1.0010        -1.0010        +INF            EPS         
+7         -1.0010         0.0054        +INF             .          
+8         -1.0010        -0.0146        +INF             .          
+9         -1.0010        -0.0346        +INF             .          
+10        -1.0010        -0.0146        +INF             .          
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 18
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+---- EQU x22_loc  whether the robot need one more step to reach the destination according to constraint22 at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -1.0010         1.0000        +INF             .          
+1         -1.0010        -0.0140        +INF             .          
+2         -1.0010        -0.0340        +INF             .          
+3         -1.0010        -0.0140        +INF             .          
+4         -1.0010        -0.0060        +INF             .          
+5         -1.0010         0.0085        +INF             .          
+6         -1.0010        -0.9990        +INF             .          
+7         -1.0010        -0.0054        +INF             .          
+8         -1.0010         0.0146        +INF             .          
+9         -1.0010         0.0346        +INF             .          
+10        -1.0010         0.0146        +INF             .          
+
+---- EQU x31_loc  whether the robot need one more step to reach the destination according to constraint31 at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -0.9310         1.0000        +INF             .          
+1         -0.9310         0.0012        +INF             .          
+2         -0.9310          .            +INF             .          
+3         -0.9310         0.0050        +INF             .          
+4         -0.9310         0.0300        +INF             .          
+5         -0.9310         0.0580        +INF             .          
+6         -0.9310        -0.9310        +INF            EPS         
+7         -0.9310         0.0713        +INF             .          
+8         -0.9310         0.0647        +INF             .          
+9         -0.9310         0.0383        +INF             .          
+10        -0.9310         0.0100        +INF             .          
+
+---- EQU x32_loc  whether the robot need one more step to reach the destination according to constraint32 at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -1.0710         1.0000        +INF             .          
+1         -1.0710        -0.0012        +INF             .          
+2         -1.0710          .            +INF             .          
+3         -1.0710        -0.0050        +INF             .          
+4         -1.0710        -0.0300        +INF             .          
+5         -1.0710        -0.0580        +INF             .          
+6         -1.0710        -1.0690        +INF             .          
+7         -1.0710        -0.0712        +INF             .          
+8         -1.0710        -0.0647        +INF             .          
+9         -1.0710        -0.0382        +INF             .          
+10        -1.0710        -0.0100        +INF             .          
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 19
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+---- EQU x41_loc  whether the robot need one more step to reach the destination according to constraint41 at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -1.0010         1.0000        +INF             .          
+1         -1.0010         0.0025        +INF             .          
+2         -1.0010        -0.0050        +INF             .          
+3         -1.0010         0.0150        +INF             .          
+4         -1.0010         0.0350        +INF             .          
+5         -1.0010         0.0210        +INF             .          
+6         -1.0010        -0.9990        +INF             .          
+7         -1.0010         0.0035        +INF             .          
+8         -1.0010        -0.0165        +INF             .          
+9         -1.0010        -0.0365        +INF             .          
+10        -1.0010        -0.0200        +INF             .          
+
+---- EQU x42_loc  whether the robot need one more step to reach the destination according to constraint42 at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -1.0010         1.0000        +INF             .          
+1         -1.0010        -0.0025        +INF             .          
+2         -1.0010         0.0050        +INF             .          
+3         -1.0010        -0.0150        +INF             .          
+4         -1.0010        -0.0350        +INF             .          
+5         -1.0010        -0.0210        +INF             .          
+6         -1.0010        -1.0010        +INF            EPS         
+7         -1.0010        -0.0035        +INF             .          
+8         -1.0010         0.0165        +INF             .          
+9         -1.0010         0.0365        +INF             .          
+10        -1.0010         0.0200        +INF             .          
+
+---- EQU x110_loc  whether the robot need one more step in the part_1
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -0.9450         1.0000        +INF             .          
+1         -0.9450         0.0070        +INF             .          
+2         -0.9450         0.0310        +INF             .          
+3         -0.9450        -0.9450        +INF            EPS         
+4         -0.9450         0.0650        +INF             .          
+5         -0.9450         0.0637        +INF             .          
+6         -0.9450         0.0590        +INF             .          
+7         -0.9450         0.0612        +INF             .          
+8         -0.9450         0.0566        +INF             .          
+9         -0.9450         0.0319        +INF             .          
+10        -0.9450         0.0073        +INF             .          
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 20
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+---- EQU x120_loc  whether the robot need one more step in the part_1
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -1.0650         1.0000        +INF             .          
+1         -1.0650        -0.0070        +INF             .          
+2         -1.0650        -0.0310        +INF             .          
+3         -1.0650        -1.0550        +INF             .          
+4         -1.0650        -0.0650        +INF             .          
+5         -1.0650        -0.0637        +INF             .          
+6         -1.0650        -0.0590        +INF             .          
+7         -1.0650        -0.0612        +INF             .          
+8         -1.0650        -0.0566        +INF             .          
+9         -1.0650        -0.0319        +INF             .          
+10        -1.0650        -0.0073        +INF             .          
+
+---- EQU x310_loc  whether the robot need one more step in the part_1
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -1.0050         1.0000        +INF             .          
+1         -1.0050         0.0012        +INF             .          
+2         -1.0050          .            +INF             .          
+3         -1.0050        -0.9950        +INF             .          
+4         -1.0050         0.0300        +INF             .          
+5         -1.0050         0.0580        +INF             .          
+6         -1.0050         0.0690        +INF             .          
+7         -1.0050         0.0713        +INF             .          
+8         -1.0050         0.0647        +INF             .          
+9         -1.0050         0.0382        +INF             .          
+10        -1.0050         0.0100        +INF             .          
+
+---- EQU x320_loc  whether the robot need one more step in the part_1
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -1.0050         1.0000        +INF             .          
+1         -1.0050        -0.0012        +INF             .          
+2         -1.0050          .            +INF             .          
+3         -1.0050        -1.0050        +INF            EPS         
+4         -1.0050        -0.0300        +INF             .          
+5         -1.0050        -0.0580        +INF             .          
+6         -1.0050        -0.0690        +INF             .          
+7         -1.0050        -0.0712        +INF             .          
+8         -1.0050        -0.0647        +INF             .          
+9         -1.0050        -0.0383        +INF             .          
+10        -1.0050        -0.0100        +INF             .          
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 21
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+---- EQU r2_equ  whether the robot start to walk in the part_2 of the corridor
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -INF             .             0.9450          .          
+1         -INF           -0.0070         0.9450          .          
+2         -INF           -0.0310         0.9450          .          
+3         -INF            0.9450         0.9450          .          
+4         -INF            0.9350         0.9450          .          
+5         -INF            0.9362         0.9450          .          
+6         -INF           -0.0590         0.9450          .          
+7         -INF           -0.0612         0.9450          .          
+8         -INF           -0.0566         0.9450          .          
+9         -INF           -0.0319         0.9450          .          
+10        -INF           -0.0073         0.9450          .          
+
+---- EQU z_equ  the relationship between z and r
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .              .          
+1           .              .              .              .          
+2           .              .              .              .          
+3           .              .              .              .          
+4           .              .              .              .          
+5           .              .              .              .          
+6           .              .              .              .          
+7           .              .              .              .          
+8           .              .              .              .          
+9           .              .              .              .          
+10          .              .              .              .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU T_equ               .              .              .             1.0000      
+
+  T_equ  totalstep
+
+---- VAR x1  z_1 -coordinate at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .             EPS         
+1         -INF            0.7000         6.5000          .          
+2         -INF            3.1000         6.5000          .          
+3         -INF            5.5000         6.5000          .          
+4         -INF            6.5000         6.5000         EPS         
+5         -INF            6.3750         6.5000          .          
+6         -INF            5.9000         6.5000          .          
+7         -INF            6.1188         6.5000          .          
+8         -INF            5.6563         6.5000          .          
+9         -INF            3.1938         6.5000          .          
+10        -INF            0.7313         6.5000          .          
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 22
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+---- VAR x2  the velocity in the z_1 -direction at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .             EPS         
+1         -INF            1.4000        +INF             .          
+2         -INF            3.4000        +INF             .          
+3         -INF            1.4000        +INF             .          
+4         -INF            0.6000        +INF             .          
+5         -INF           -0.8500        +INF             .          
+6         -INF           -0.1000        +INF             .          
+7         -INF            0.5375        +INF             .          
+8         -INF           -1.4625        +INF             .          
+9         -INF           -3.4625        +INF             .          
+10        -INF           -1.4625        +INF             .          
+
+---- VAR x3  z_2 -coordinate at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .             EPS         
+1         -0.5000         0.1250        +INF             .          
+2         -0.5000          .            +INF             .          
+3         -0.5000         0.5000        +INF             .          
+4         -0.5000         3.0000        +INF             .          
+5         -0.5000         5.8000        +INF             .          
+6         -0.5000         6.9000        +INF             .          
+7         -0.5000         7.1250        +INF             .          
+8         -0.5000         6.4750        +INF             .          
+9         -0.5000         3.8250        +INF             .          
+10        -0.5000         1.0000        +INF             .          
+
+---- VAR x4  the velocity in the z_2 -direction at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .             EPS         
+1         -INF            0.2500        +INF             .          
+2         -INF           -0.5000        +INF             .          
+3         -INF            1.5000        +INF             .          
+4         -INF            3.5000        +INF             .          
+5         -INF            2.1000        +INF             .          
+6         -INF            0.1000        +INF             .          
+7         -INF            0.3500        +INF             .          
+8         -INF           -1.6500        +INF             .          
+9         -INF           -3.6500        +INF             .          
+10        -INF           -2.0000        +INF             .          
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 23
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+---- VAR u1  control signal in z_1 -direction at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -2.0000         1.4000         2.0000          .          
+1         -2.0000         2.0000         2.0000         EPS         
+2         -2.0000        -2.0000         2.0000         EPS         
+3         -2.0000        -0.8000         2.0000          .          
+4         -2.0000        -1.4500         2.0000          .          
+5         -2.0000         0.7500         2.0000          .          
+6         -2.0000         0.6375         2.0000          .          
+7         -2.0000        -2.0000         2.0000         EPS         
+8         -2.0000        -2.0000         2.0000         EPS         
+9         -2.0000         2.0000         2.0000         EPS         
+10        -2.0000         1.4625         2.0000          .          
+
+---- VAR u2  control signal in z_2 -direction at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -2.0000         0.2500         2.0000          .          
+1         -2.0000        -0.7500         2.0000          .          
+2         -2.0000         2.0000         2.0000         EPS         
+3         -2.0000         2.0000         2.0000         EPS         
+4         -2.0000        -1.4000         2.0000          .          
+5         -2.0000        -2.0000         2.0000         EPS         
+6         -2.0000         0.2500         2.0000          .          
+7         -2.0000        -2.0000         2.0000         EPS         
+8         -2.0000        -2.0000         2.0000         EPS         
+9         -2.0000         1.6500         2.0000          .          
+10        -2.0000         2.0000         2.0000         EPS         
+
+---- VAR z  whether the robot need one more step to reach the destination
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .             1.0000         1.0000         1.0000      
+1           .             1.0000         1.0000         1.0000      
+2           .             1.0000         1.0000         1.0000      
+3           .             1.0000         1.0000         1.0000      
+4           .             1.0000         1.0000         1.0000      
+5           .             1.0000         1.0000         1.0000      
+6           .              .             1.0000         1.0000      
+7           .              .             1.0000         1.0000      
+8           .              .             1.0000         1.0000      
+9           .              .             1.0000         1.0000      
+10          .              .             1.0000         1.0000      
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 24
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE project2 Using MIP From line 81
+
+
+---- VAR r1  whether the robot is in the part_1 of the corridor at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0          1.0000         1.0000         1.0000         EPS         
+1           .             1.0000         1.0000         EPS         
+2           .             1.0000         1.0000         EPS         
+3           .              .             1.0000         EPS         
+4           .              .             1.0000         EPS         
+5           .              .             1.0000         EPS         
+6           .              .             1.0000         EPS         
+7           .              .             1.0000         EPS         
+8           .              .             1.0000         EPS         
+9           .              .             1.0000         EPS         
+10          .              .             1.0000         EPS         
+
+---- VAR r2  whether the robot is in the part_2 of the corridor at time kh
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0           .              .              .             EPS         
+1           .              .             1.0000         EPS         
+2           .              .             1.0000         EPS         
+3           .             1.0000         1.0000         EPS         
+4           .             1.0000         1.0000         EPS         
+5           .             1.0000         1.0000         EPS         
+6           .              .             1.0000         EPS         
+7           .              .             1.0000         EPS         
+8           .              .             1.0000         EPS         
+9           .              .             1.0000         EPS         
+10          .              .             1.0000         EPS         
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR T                 -INF            6.0000        +INF             .          
+
+  T  totalstep
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 25
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     83 VARIABLE T.L                   =        6.000  totalstep
+
+----     83 VARIABLE u1.L  control signal in z_1 -direction at time kh
+
+0   1.400,    1   2.000,    2  -2.000,    3  -0.800,    4  -1.450,    5   0.750,    6   0.637,    7  -2.000,    8  -2.000,    9   2.000,    10  1.463
+
+
+----     83 VARIABLE u2.L  control signal in z_2 -direction at time kh
+
+0   0.250,    1  -0.750,    2   2.000,    3   2.000,    4  -1.400,    5  -2.000,    6   0.250,    7  -2.000,    8  -2.000,    9   1.650,    10  2.000
+
+
+----     83 VARIABLE z.L  whether the robot need one more step to reach the destination
+
+0 1.000,    1 1.000,    2 1.000,    3 1.000,    4 1.000,    5 1.000
+
+
+----     83 VARIABLE x1.L  z_1 -coordinate at time kh
+
+1  0.700,    2  3.100,    3  5.500,    4  6.500,    5  6.375,    6  5.900,    7  6.119,    8  5.656,    9  3.194,    10 0.731
+
+
+----     83 VARIABLE x2.L  the velocity in the z_1 -direction at time kh
+
+1   1.400,    2   3.400,    3   1.400,    4   0.600,    5  -0.850,    6  -0.100,    7   0.537,    8  -1.463,    9  -3.463,    10 -1.463
+
+
+----     83 VARIABLE x3.L  z_2 -coordinate at time kh
+
+1  0.125,    3  0.500,    4  3.000,    5  5.800,    6  6.900,    7  7.125,    8  6.475,    9  3.825,    10 1.000
+
+
+----     83 VARIABLE x4.L  the velocity in the z_2 -direction at time kh
+
+1   0.250,    2  -0.500,    3   1.500,    4   3.500,    5   2.100,    6   0.100,    7   0.350,    8  -1.650,    9  -3.650,    10 -2.000
+
+
+----     83 VARIABLE r1.L  whether the robot is in the part_1 of the corridor at time kh
+
+0 1.000,    1 1.000,    2 1.000
+
+
+----     83 VARIABLE r2.L  whether the robot is in the part_2 of the corridor at time kh
+
+3 1.000,    4 1.000,    5 1.000
+
+
+
+EXECUTION TIME       =        0.004 SECONDS      3 MB  25.0.1 r65189 LEX-LEG
+GAMS 25.0.1  r65189 Released Jan 17, 2018 LEX-LEG x86 64bit/Linux                                                                                                                                                                     02/24/18 18:04:31 Page 26
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+USER: GAMS Development Corporation, USA              G871201/0000CA-ANY
+      Free Demo, +1 202-342-0180, support@gams.com, www.gams.com DC0000
+
+
+**** FILE SUMMARY
+
+Input      /home/hannah/Documents/gams-ex/project2/pro2_advanced.gms
+Output     /home/hannah/Documents/gams-ex/project2/pro2_advanced.lst
